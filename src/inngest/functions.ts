@@ -26,7 +26,7 @@ export const helloWorld = inngest.createFunction(
       description: "An expert agent that can write code",
       system: PROMPT,
       model: openai({ 
-        model: "gpt-5",
+        model: "gpt-4.1-mini",
        }),
       tools: [
         createTool({
@@ -117,7 +117,7 @@ export const helloWorld = inngest.createFunction(
           },
         }),
       ],
-      lifecycle: ({
+      lifecycle: {
         onResponse: async ({ result, network }) => {
           const lastAssistantMessageText = lastAssistantTextMessageContent(result);
 
@@ -129,13 +129,13 @@ export const helloWorld = inngest.createFunction(
 
           return result;
         },
-      }),
+      },
     });
 
     const network = createNetwork({
       name: "coding-agent-network",
       agents: [codeAgent],
-      maxIter: 5,
+      maxIter: 10,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
