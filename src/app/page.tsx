@@ -4,28 +4,30 @@
 // Next.js 15, React, Inngest, Prisma
 
 // Use Client Component
-//'use client';
+'use client';
+
+import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // Imports
-import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
-import { caller, getQueryClient, trpc } from "@/trpc/server";
-import { Client } from "./client";
-import { Suspense } from "react";
 
-const Page = async () => {
-  // const trpc = useTRPC();
-
-  // const { data } = useQuery(trpc.createAI.queryOptions({ text: "Thiago!" }));
-  const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(trpc.createAI.queryOptions({ text: "Thiago PREFETCH" }));
-  const data = await caller.createAI({ text: "Thiago!" });
+const Page = () => {
+  const trpc = useTRPC();
+  const invoke = useMutation(trpc.invoke.mutationOptions({
+    onSuccess: () => {
+      // Handle success
+      toast.success("Background job invoked!");
+    }
+  }));
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense>
-        <Client />
-      </Suspense>
-    </HydrationBoundary>
+    <div className="p-4 max-w-7xl mx-auto">
+      <Button disabled={invoke.isPending} onClick={() => invoke.mutate({ text: "ThiagoC" })}>
+        Invoke Background Job
+      </Button>
+    </div>
   );
 }
  
