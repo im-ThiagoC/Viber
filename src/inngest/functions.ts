@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod"; 
 
 import { openai, createAgent, createTool, createNetwork, type Tool } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter"
@@ -11,8 +11,6 @@ import { prisma } from "@/lib/db";
 interface AgentState {
   summary: string,
   files: { [path: string]: string },
-
-
 }
 
 export const codeAgentFunction = inngest.createFunction(
@@ -20,9 +18,7 @@ export const codeAgentFunction = inngest.createFunction(
   { event: "code-agent/run" },
   async ({ event, step }) => {
 
-    // Imagine this is a long-running task
-    //await step.sleep("wait-a-moment", "5s");
-    
+    // Create a new sandbox (or get an existing one)
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("viber-nextjs-test");
       return sandbox.sandboxId;
@@ -31,14 +27,14 @@ export const codeAgentFunction = inngest.createFunction(
     // Create a new agent with a system prompt (you can add optional tools, too)
     const codeAgent = createAgent<AgentState>({
       name: "code-agent",
-      description: "An expert agent that can write code",
+      description: "An expert coding agent",
       system: PROMPT,
       model: openai({ 
         model: "gpt-4.1",
         defaultParameters: {
           temperature: 0.1,
         }
-       }),
+      }),
       tools: [
         createTool({
           name: "terminal",
@@ -97,7 +93,7 @@ export const codeAgentFunction = inngest.createFunction(
                 return updatedFiles;
               } 
               catch (e) {
-                return `Error: ${e}`
+                return `Error: ${e}`;
               }
             });
 
@@ -149,7 +145,7 @@ export const codeAgentFunction = inngest.createFunction(
     const network = createNetwork<AgentState>({
       name: "coding-agent-network",
       agents: [codeAgent],
-      maxIter: 15,
+      maxIter: 5,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -160,11 +156,11 @@ export const codeAgentFunction = inngest.createFunction(
       },
     });
 
-		const result = await network.run(event.data.value);
+    const result = await network.run(event.data.value);
 
-    const isError = 
-      !result.state.data.summary ||
-      Object.keys(result.state.data.files || {}).length === 0;
+    const hasSummary = Boolean(result.state.data.summary?.trim());
+    const hasFiles = Object.keys(result.state.data.files || {}).length > 0;
+    const isError = !hasSummary && !hasFiles;
 
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
@@ -176,6 +172,7 @@ export const codeAgentFunction = inngest.createFunction(
       if (isError) {
         return await prisma.message.create({
           data: {
+            projectId: event.data.projectId,
             content: "The agent failed to produce a result. Please try again.",
             role: "ASSISTANT",
             type: "ERROR",
@@ -185,6 +182,7 @@ export const codeAgentFunction = inngest.createFunction(
 
       return await prisma.message.create({
         data: {
+          projectId: event.data.projectId,
           content: result.state.data.summary || "No summary provided",
           role: "ASSISTANT",
           type: "RESULT",
@@ -192,7 +190,7 @@ export const codeAgentFunction = inngest.createFunction(
             create: {
               sandboxUrl: sandboxUrl,
               title: "Fragment",
-              files: result.state.data.files ,
+              files: result.state.data.files,
             },
           },
         },
