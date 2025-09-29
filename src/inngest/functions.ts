@@ -9,8 +9,8 @@ import { PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
 
 interface AgentState {
-  summary: string,
-  files: { [path: string]: string },
+  summary: string;
+  files: { [path: string]: string };
 }
 
 export const codeAgentFunction = inngest.createFunction(
@@ -71,10 +71,12 @@ export const codeAgentFunction = inngest.createFunction(
           name: "createOrUpdateFiles",
           description: "Create or update files in the file system",
           parameters: z.object({
-            files: z.array(z.object({
-              path: z.string(),
-              content: z.string()
-            }))
+            files: z.array(
+              z.object({
+                path: z.string(),
+                content: z.string(),
+              })
+            ),
           }),
           handler: async (
             { files }, 
@@ -132,7 +134,7 @@ export const codeAgentFunction = inngest.createFunction(
           const lastAssistantMessageText = lastAssistantTextMessageContent(result);
 
           if (lastAssistantMessageText && network) {
-            if (lastAssistantMessageText.includes("<task-summary>")) {
+            if (lastAssistantMessageText.includes("<task_summary>")) {
               network.state.data.summary = lastAssistantMessageText;
             }
           }
@@ -145,7 +147,7 @@ export const codeAgentFunction = inngest.createFunction(
     const network = createNetwork<AgentState>({
       name: "coding-agent-network",
       agents: [codeAgent],
-      maxIter: 5,
+      maxIter: 15,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
         if (summary) {
@@ -158,9 +160,9 @@ export const codeAgentFunction = inngest.createFunction(
 
     const result = await network.run(event.data.value);
 
-    const hasSummary = Boolean(result.state.data.summary?.trim());
-    const hasFiles = Object.keys(result.state.data.files || {}).length > 0;
-    const isError = !hasSummary && !hasFiles;
+    const isError = 
+      !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length === 0;
 
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
@@ -183,7 +185,7 @@ export const codeAgentFunction = inngest.createFunction(
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId,
-          content: result.state.data.summary || "No summary provided",
+          content: result.state.data.summary,
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
