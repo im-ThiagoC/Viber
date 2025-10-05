@@ -39,7 +39,7 @@ export const codeAgentFunction = inngest.createFunction(
       model: openai({ 
         model: "gpt-4.1",
         defaultParameters: {
-          temperature: 0.1,
+          temperature: 0.3,
         }
       }),
       tools: [
