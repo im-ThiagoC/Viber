@@ -23,6 +23,7 @@ import { FileExplorer } from "@/components/file-explorer";
 import { ProjectHeader } from "../components/project-header";
 import { MessagesContainer } from "../components/messages-container";
 import { FragmentWeb } from "../components/fragment-web";
+import { UserControl } from "@/components/user-control";
 
 interface ProjectViewProps {
 	projectId: string;
@@ -81,6 +82,7 @@ export const ProjectView = ({ projectId }: ProjectViewProps) => {
 										<CrownIcon /> Upgrade to Pro
 									</Link>
 								</Button>
+								<UserControl />
 							</div>
 						</div>
 						<TabsContent value="preview">

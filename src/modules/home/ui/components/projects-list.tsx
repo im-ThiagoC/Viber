@@ -15,20 +15,33 @@ import { useTRPC } from "@/trpc/client";
 // import { EyeIcon, CodeIcon, CrownIcon } from "lucide-react";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 
 // My components
 // import { CodeView } from "@/components/code-view";
 
 export const ProjectsList = () => {
   const trpc = useTRPC();
+  const { user } = useUser();
+
   const { data: projects } = useQuery(
     trpc.projects.getMany.queryOptions()
   );
 
+  if (!user) return (
+    <div>
+      <p className="text-center text-muted-foreground">
+        You must be logged in to view your projects.
+      </p>
+    </div>
+  );
+
+
+
   return (
     <div className="w-full bg-white dark:bg-sidebar rounded-xl p-8 border flex flex-col gap-y-6 sm:gap-x-4">
       <h2 className="text-2xl font-semibold">
-        Previous Vibes
+        {user?.firstName ? `${user.firstName}'s Vibes` : "Your Projects"}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {projects?.length === 0 && (
