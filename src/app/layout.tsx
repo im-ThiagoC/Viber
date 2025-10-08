@@ -8,6 +8,7 @@ import {
 
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import { dark } from "@clerk/themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#7033ff",
+        },
+      }}
+    >
       <TRPCReactProvider>
         <html lang="en" suppressHydrationWarning>
           <body

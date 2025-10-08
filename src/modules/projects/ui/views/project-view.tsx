@@ -2,6 +2,7 @@
 
 // Node imports
 import { useState, Suspense } from "react";
+import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 
 // Database dependencies
@@ -25,6 +26,7 @@ import { MessagesContainer } from "../components/messages-container";
 import { FragmentWeb } from "../components/fragment-web";
 import { UserControl } from "@/components/user-control";
 
+
 interface ProjectViewProps {
 	projectId: string;
 	activeFragment?: Fragment | null;
@@ -34,6 +36,12 @@ interface ProjectViewProps {
 export const ProjectView = ({ projectId }: ProjectViewProps) => {
 	const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
 	const [tabState, setTabState] = useState<"preview" | "code">("preview");
+
+	const { has } = useAuth();
+
+  const hasFreeAccess = has?.({ plan: "free-user" });
+
+  const paidAccess = !hasFreeAccess;
 
 	return (
 		<div className="h-screen">
@@ -77,11 +85,19 @@ export const ProjectView = ({ projectId }: ProjectViewProps) => {
 								
 							</TabsList>
 							<div className="ml-auto flex items-center gap-x-2">
+								{paidAccess && (
+									<div className="flex items-center gap-x-2 text-sm font-medium">
+										<CrownIcon className="ml-auto text-purple-500" />
+										<p> You have premium access! </p>
+									</div>
+								)}
+								{!paidAccess && (
 								<Button asChild size={"sm"} variant="tertiary" >
-									<Link href={`/princing`}>
+									<Link href={`/pricing`}>
 										<CrownIcon /> Upgrade to Pro
 									</Link>
 								</Button>
+								)}
 								<UserControl />
 							</div>
 						</div>
