@@ -39,7 +39,7 @@ export const ProjectView = ({ projectId }: ProjectViewProps) => {
 
 	const { has } = useAuth();
 
-  const hasFreeAccess = has?.({ plan: "free-user" });
+  const hasFreeAccess = has?.({ plan: "free_user" });
 
   const paidAccess = !hasFreeAccess;
 
@@ -89,7 +89,7 @@ export const ProjectView = ({ projectId }: ProjectViewProps) => {
 								
 							</TabsList>
 							<div className="ml-auto flex items-center gap-x-2">
-								{paidAccess && (
+								{!!paidAccess && (
 									<div className="flex items-center gap-x-2 text-sm font-medium">
 										<CrownIcon className="ml-auto text-purple-500" />
 										<p> You have premium access! </p>
