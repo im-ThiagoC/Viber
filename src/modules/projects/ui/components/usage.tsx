@@ -13,6 +13,7 @@ import { CrownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
+import { useMemo } from "react";
 
 // My components
 // import { CodeView } from "@/components/code-view";
@@ -27,6 +28,21 @@ export const Usage = ({ points, msBeforeNext }: UsageProps) => {
 
   const hasFreeAccess = has?.({ plan: "free-user" });
 
+  const resetTime = useMemo(() => {
+    try {
+      return formatDuration(
+        intervalToDuration({
+          start: new Date(),
+          end: new Date(Date.now() + msBeforeNext) 
+        }),
+        { format: ["months", "days", "hours"] }
+      )
+    } catch (error) {
+      console.error("Error parsing reset time:", error);
+      return "Unknown";
+    }
+  }, [msBeforeNext]);
+
   const paidAccess = !hasFreeAccess;
 
   return (
@@ -38,13 +54,7 @@ export const Usage = ({ points, msBeforeNext }: UsageProps) => {
           </p>
           <p className="text-xs text-muted-foreground">
             Resets in {" "}
-            {formatDuration(
-              intervalToDuration({
-                start: new Date(),
-                end: new Date(Date.now() + msBeforeNext) 
-              }),
-              { format: ["months", "days", "hours"] }
-            )}
+            {resetTime ? (resetTime) : ("Unknown")}
           </p>
         </div>
         {!paidAccess && (        
