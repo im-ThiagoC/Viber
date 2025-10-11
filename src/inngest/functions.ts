@@ -1,6 +1,6 @@
-import { array, z } from "zod"; 
+import { z } from "zod"; 
 
-import { openai, anthropic, createAgent, createTool, createNetwork, type Tool, Message, createState } from "@inngest/agent-kit";
+import { openai, /*anthropic,*/ createAgent, createTool, createNetwork, type Tool, Message, createState } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter"
 
 import { inngest } from "./client";

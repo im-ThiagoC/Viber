@@ -8,7 +8,7 @@ import JSZip from "jszip";
 //import { Fragment } from "@/generated/prisma";
 
 // UI components
-import { ChevronRight, Code, CopyCheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
+import { CopyCheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ResizableHandle,
@@ -21,7 +21,6 @@ import {
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbLink,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from "@/components/ui/breadcrumb";
@@ -164,9 +163,11 @@ export const FileExplorer = ({ files }: FileExplorerProps) => {
     if(selectedFile && files[selectedFile]) {
       setDownloading(true);
       downloadZip();
-      setDownloading(false);
+      setTimeout(() => {
+        setDownloading(false);
+      }, 2000);
 
-      toast.success("Download started");
+      toast.success("Project downloaded");
     }
   }, [selectedFile, files]);
 

@@ -19,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 // My components
-import { CodeView } from "@/components/code-view";
 import { FileExplorer } from "@/components/file-explorer";
 import { ProjectHeader } from "../components/project-header";
 import { MessagesContainer } from "../components/messages-container";

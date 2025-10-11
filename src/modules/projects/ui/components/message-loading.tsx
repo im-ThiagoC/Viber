@@ -34,8 +34,6 @@ const ShimmerMessages = () => {
 }
 
 export const MessageLoading = () => {
-	const [isLoading, setIsLoading] = useState(true);
-
 	return (
 		<div className="flex flex-col group px-2 pb-4">
 			<div className="flex items-start gap-2 pl-2 mb-2">

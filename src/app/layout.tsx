@@ -8,7 +8,6 @@ import {
 
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
-import { dark } from "@clerk/themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

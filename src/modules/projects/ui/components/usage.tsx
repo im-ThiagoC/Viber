@@ -11,8 +11,7 @@ import { formatDuration, intervalToDuration } from "date-fns";
 // UI components
 import { CrownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@clerk/nextjs";
-import Image from "next/image";
+import { useAuth } from "@clerk/nextjs"
 import { useMemo } from "react";
 
 // My components
