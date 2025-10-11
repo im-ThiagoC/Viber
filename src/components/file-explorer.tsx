@@ -2,12 +2,13 @@
 
 // Node imports
 import { useState, useMemo, useCallback, Fragment } from "react";
+import JSZip from "jszip";
 
 // Database dependencies
 //import { Fragment } from "@/generated/prisma";
 
 // UI components
-import { ChevronRight, Code, CopyCheckIcon, CopyIcon } from "lucide-react";
+import { ChevronRight, Code, CopyCheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ResizableHandle,
@@ -111,6 +112,7 @@ interface FileExplorerProps {
 
 export const FileExplorer = ({ files }: FileExplorerProps) => {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(() => {
     const fileKeys = Object.keys(files);
     return fileKeys.length > 0 ? fileKeys[0] : null;
@@ -137,6 +139,37 @@ export const FileExplorer = ({ files }: FileExplorerProps) => {
     }
   }, [selectedFile, files]);
 
+   const downloadZip = useCallback(() => {
+    if(selectedFile && files[selectedFile]) {
+
+      const zip = new JSZip();
+
+      for (const file in files) {
+        zip.file(file, files[file]);
+      }
+      
+      zip.generateAsync({ type: "blob" }).then((content: Blob) => {
+        const url: string = URL.createObjectURL(content);
+        const a: HTMLAnchorElement = document.createElement("a");
+        a.href = url;
+        a.download = `${selectedFile}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    }
+  }, [selectedFile, files]);
+
+  const handleDownload = useCallback(() => {
+    if(selectedFile && files[selectedFile]) {
+      setDownloading(true);
+      downloadZip();
+      setDownloading(false);
+
+      toast.success("Download started");
+    }
+  }, [selectedFile, files]);
+
   return (
     <ResizablePanelGroup direction="horizontal">
       <ResizablePanel defaultSize={30} minSize={30} className="bg-sidebar">
@@ -152,17 +185,30 @@ export const FileExplorer = ({ files }: FileExplorerProps) => {
           <div className="h-full w-full flex flex-col">
             <div className="border-b bg-sidebar px-4 py-2 flex justifty-between items-center gap-x-2">
               <FileBreadcrumb filePath={selectedFile} />
-              <Hint text="Copy to clipboard" side="bottom">
-                <Button 
-                  variant={"outline"} 
-                  size={"icon"} 
-                  className="ml-auto" 
-                  onClick={handleCopy}
-                  disabled={copied}
-                >
-                  {copied ? <CopyCheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-                </Button>
-              </Hint>
+              <div className="flex items-center gap-2 ml-auto">
+                <Hint text="Download Project" side="bottom">
+                  <Button 
+                    variant={"outline"} 
+                    size={"icon"} 
+                    className="ml-auto " 
+                    onClick={handleDownload}
+                    disabled={downloading}
+                  >
+                    <DownloadIcon className="size-4" />
+                  </Button>
+                </Hint>
+                <Hint text="Copy to clipboard" side="bottom">
+                  <Button 
+                    variant={"outline"} 
+                    size={"icon"} 
+                    className="ml-auto" 
+                    onClick={handleCopy}
+                    disabled={copied}
+                  >
+                    {copied ? <CopyCheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+                  </Button>
+                </Hint>
+              </div>
             </div>
             <div className="flex-1 overflow-auto">
               <CodeView 
