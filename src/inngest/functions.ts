@@ -1,6 +1,6 @@
 import { z } from "zod"; 
 
-import { openai, /*anthropic,*/ createAgent, createTool, createNetwork, type Tool, Message, createState } from "@inngest/agent-kit";
+import { openai, anthropic, createAgent, createTool, createNetwork, type Tool, Message, createState } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter"
 
 import { inngest } from "./client";
@@ -22,7 +22,7 @@ export const codeAgentFunction = inngest.createFunction(
 		// Create a new sandbox (or get an existing one)
 		const sandboxId = await step.run("get-sandbox-id", async () => {
 			const sandbox = await Sandbox.create("viber-nextjs-test");
-      await sandbox.setTimeout(SANDBOX_TIMEOUT); // 30 minutes
+			await sandbox.setTimeout(SANDBOX_TIMEOUT); // 30 minutes
 			return sandbox.sandboxId;
 		});
 
@@ -33,7 +33,7 @@ export const codeAgentFunction = inngest.createFunction(
 			const messages = await prisma.message.findMany({
 				where: { projectId: event.data.projectId },
 				orderBy: { createdAt: "desc" },
-        take: 10, // Limit to the last 10 messages
+				take: 10, // Limit to the last 10 messages
 			});
 
 			for (const message of messages) {
@@ -58,33 +58,57 @@ export const codeAgentFunction = inngest.createFunction(
 		}
 	);
 
+	const lastMessage = await step.run("get-last-message", async () => {
+		const message = await prisma.message.findFirst({
+			where: { projectId: event.data.projectId },
+			orderBy: { createdAt: "desc" },
+		});
+		return message;
+	});
 
-		// Create a new agent with a system prompt (you can add optional tools, too)
-		const codeAgent = createAgent<AgentState>({
-			name: "code-agent",
-			description: "An expert coding agent",
-			system: PROMPT,
-			// model: anthropic({ 
-			//   model: "claude-sonnet-4-5",
-			//   defaultParameters: {
-			//     max_tokens: 15000,
-			//     temperature: 0.3,
-			//   },
-			// }),
-			model: openai({ 
-				model: "gpt-4.1",
-				defaultParameters: {
-					temperature: 0.3,
-				}
-			}),
-			tools: [
-				createTool({
-					name: "terminal",
-					description: "Use the terminal to run commands",
-					parameters: z.object({
-						command: z.string(),
-					}),
-					handler: async ({ command }, { step }) => {
+	const hasClaudeAccess = lastMessage?.ai === "CLAUDE_SONNET_4_5" 	? true : false;
+	const hasGPTAccess		= lastMessage?.ai === "GPT_4_1" 						? true : false;
+
+	// Choose model based on user plan
+	let model;
+	if (hasClaudeAccess) {
+		model = anthropic({ 
+			model: "claude-sonnet-4-5",
+			defaultParameters: {
+				max_tokens: 15000,
+				temperature: 0.3,
+			},
+		});
+	} else if (hasGPTAccess) {
+		model = openai({ 
+			model: "gpt-4.1",
+			defaultParameters: {
+				temperature: 0.3,
+			}
+		});
+	} else {
+		model = openai({ 
+			model: "gpt-4.1-nano",
+			defaultParameters: {
+				temperature: 0.3,
+			}
+		});
+	}
+
+	// Create a new agent with a system prompt (you can add optional tools, too)
+	const codeAgent = createAgent<AgentState>({
+		name: "code-agent",
+		description: "An expert coding agent",
+		system: PROMPT,
+		model,
+		tools: [
+			createTool({
+				name: "terminal",
+				description: "Use the terminal to run commands",
+				parameters: z.object({
+					command: z.string(),
+				}),
+				handler: async ({ command }, { step }) => {
 						return await step?.run("terminal", async () => {
 							const buffers = { stdout: "", stderr: "" };
 

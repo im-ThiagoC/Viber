@@ -6,8 +6,10 @@ import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { generateSlug } from "random-word-slugs"
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
+import { auth } from "@clerk/nextjs/server";
 
 export const projectsRouter = createTRPCRouter({
+  
   // Define your procedures here
   create: protectedProcedure
     .input(
@@ -35,6 +37,23 @@ export const projectsRouter = createTRPCRouter({
         }
       }
 
+      const { has } = await auth();
+
+      const isFreeUser 						= has?.({ plan: "free_user" });
+      const isPro 								= has?.({ plan: "pro" });
+      const isClaudePro 					= has?.({ plan: "claude_pro" });
+      const isExtendedClaudePro 	= has?.({ plan: "extended_claude_pro" });
+
+      const hasClaudeAccess = isClaudePro || isExtendedClaudePro;
+      const hasGPTAccess		= isFreeUser 	|| isPro; 
+
+      if(!hasClaudeAccess && !hasGPTAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to any AI models. Please upgrade your plan.",
+        })
+      }
+
       const createdProject = await prisma.project.create ({
         data: {
           userId: ctx.auth.userId,
@@ -46,6 +65,7 @@ export const projectsRouter = createTRPCRouter({
               content: input.value,
               role: "USER",
               type: "RESULT",
+              ai: hasClaudeAccess ? "CLAUDE_SONNET_4_5" : "GPT_4_1",
             }
           }
         }

@@ -5,6 +5,7 @@ import { inngest } from "@/inngest/client";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { consumeCredits } from "@/lib/usage";
+import { auth } from "@clerk/nextjs/server";
 
 export const messagesRouter = createTRPCRouter({
   // Define your procedures here
@@ -49,12 +50,30 @@ export const messagesRouter = createTRPCRouter({
         }
       }
 
+      const { has } = await auth();
+
+      const isFreeUser 						= has?.({ plan: "free_user" });
+      const isPro 								= has?.({ plan: "pro" });
+      const isClaudePro 					= has?.({ plan: "claude_pro" });
+      const isExtendedClaudePro 	= has?.({ plan: "extended_claude_pro" });
+
+      const hasClaudeAccess = isClaudePro || isExtendedClaudePro;
+      const hasGPTAccess		= isFreeUser 	|| isPro; 
+      
+      if(!hasClaudeAccess && !hasGPTAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to any AI models. Please upgrade your plan.",
+        })
+      }
+
       const newMessage = await prisma.message.create({
         data: {
           projectId: existingProject.id,
           content: input.value,
           role: "USER",
           type: "RESULT",
+          ai: hasClaudeAccess ? "CLAUDE_SONNET_4_5" : "GPT_4_1",
         }
       });
 

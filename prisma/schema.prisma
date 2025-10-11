@@ -25,6 +25,12 @@ enum MessageType {
   ERROR
 }
 
+enum AIModel {
+  GPT_4_1_NANO 
+  GPT_4_1
+  CLAUDE_SONNET_4_5
+}
+
 model Project {
   id String @id @default(uuid())
   name String
@@ -44,6 +50,7 @@ model Message {
   content String
   role MessageRole
   type MessageType
+  ai AIModel?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
