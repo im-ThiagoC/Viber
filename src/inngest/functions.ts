@@ -7,6 +7,7 @@ import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent, parseAgentResponse } from "./utils";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
+import { SANDBOX_TIMEOUT } from "@/lib/types";
 
 interface AgentState {
 	summary: string;
@@ -21,6 +22,7 @@ export const codeAgentFunction = inngest.createFunction(
 		// Create a new sandbox (or get an existing one)
 		const sandboxId = await step.run("get-sandbox-id", async () => {
 			const sandbox = await Sandbox.create("viber-nextjs-test");
+      await sandbox.setTimeout(SANDBOX_TIMEOUT); // 30 minutes
 			return sandbox.sandboxId;
 		});
 
@@ -30,7 +32,8 @@ export const codeAgentFunction = inngest.createFunction(
 
 			const messages = await prisma.message.findMany({
 				where: { projectId: event.data.projectId },
-				orderBy: { createdAt: "asc" },
+				orderBy: { createdAt: "desc" },
+        take: 10, // Limit to the last 10 messages
 			});
 
 			for (const message of messages) {
@@ -42,7 +45,7 @@ export const codeAgentFunction = inngest.createFunction(
 				});
 			}
 
-			return formattedMessages;
+			return formattedMessages.reverse();
 		});
 
 		const state = createState<AgentState>(
