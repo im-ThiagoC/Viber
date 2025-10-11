@@ -25,7 +25,7 @@ interface UsageProps {
 export const Usage = ({ points, msBeforeNext }: UsageProps) => {
   const { has } = useAuth();
 
-  const hasFreeAccess = has?.({ plan: "free-user" });
+  const hasFreeAccess = has?.({ plan: "free_user" });
 
   const resetTime = useMemo(() => {
     try {
